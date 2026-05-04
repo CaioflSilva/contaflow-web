@@ -67,12 +67,12 @@ export default function Login() {
           </button>
         </form>
 
-        <p style={styles.footer}>
-          Não tem conta?{' '}
-          <span style={styles.link} onClick={() => navigate('/registrar')}>
-            Criar escritório
-          </span>
-        </p>
+       <p style={styles.footer}>
+         Não tem conta?{' '}
+         <span style={styles.link} onClick={() => navigate('/registrar')}>
+           Criar escritório
+         </span>
+       </p>
       </div>
     </div>
   );
