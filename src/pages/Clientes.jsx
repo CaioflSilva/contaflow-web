@@ -96,6 +96,18 @@ export default function Clientes() {
     }
   };
 
+  const handleGerarMes = async (clienteId) => {
+    const mes = new Date().getMonth() + 1;
+    const ano = new Date().getFullYear();
+    try {
+      const res = await api.post(`/obrigacoes/cliente/${clienteId}/gerar-mes?mes=${mes}&ano=${ano}`);
+      alert(`✅ ${res.data.length} obrigações geradas para ${new Date().toLocaleString('pt-BR', { month: 'long' })}/${ano}!`);
+      carregarDados();
+    } catch (e) {
+      alert('❌ Erro ao gerar obrigações');
+    }
+  };
+
   const getObrigacoesCliente = (clienteId) =>
     obrigacoes.filter(o => o.clienteId === clienteId);
 
@@ -135,6 +147,9 @@ export default function Clientes() {
         )}
         {clienteSelecionado && (
           <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => handleGerarMes(clienteSelecionado.id)} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: C.green, color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+              ⚡ Gerar mês atual
+            </button>
             <button onClick={() => {
               if (!editando) {
                 setFormEdicao({
@@ -254,8 +269,11 @@ export default function Clientes() {
               </div>
 
               <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, overflow: 'hidden', flex: 1 }}>
-                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', color: C.text }}>Obrigações</div>
+                  <button onClick={() => handleGerarMes(clienteSelecionado.id)} style={{ padding: '6px 14px', borderRadius: '6px', border: 'none', background: C.accent, color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                    ⚡ Gerar mês atual
+                  </button>
                 </div>
                 {getObrigacoesCliente(clienteSelecionado.id).length === 0 ? (
                   <div style={{ padding: '32px', textAlign: 'center', color: C.muted, fontSize: '13px' }}>
