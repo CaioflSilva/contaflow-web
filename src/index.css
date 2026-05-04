@@ -17,3 +17,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+* {
+  font-weight: 500;
+}
+
+p, span, div {
+  font-weight: 500;
+}
