@@ -7,6 +7,7 @@ import Alertas from './Alertas';
 import Calendario from './Calendario';
 import Relatorios from './Relatorios';
 import Configuracoes from './Configuracoes';
+import Usuarios from './Usuarios';
 
 const C = {
   bg: '#f0f4f8', surface: '#ffffff', surface2: '#f8fafc',
@@ -108,7 +109,7 @@ export default function Dashboard() {
 
         <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
           {[
-            { section: '📁 Gestão', items: [{ id: 'dashboard', icon: '⬛', label: 'Visão Geral' }, { id: 'clientes', icon: '👥', label: 'Clientes' }, { id: 'obrigacoes', icon: '📋', label: 'Obrigações' }] },
+          { section: '📁 Gestão', items: [{ id: 'dashboard', icon: '⬛', label: 'Visão Geral' }, { id: 'clientes', icon: '👥', label: 'Clientes' }, { id: 'obrigacoes', icon: '📋', label: 'Obrigações' }, { id: 'usuarios', icon: '👤', label: 'Equipe' }] },
             { section: '📊 Monitoramento', items: [{ id: 'alertas', icon: '🔔', label: 'Alertas', badge: obrigacoesAtrasadas.length }, { id: 'calendario', icon: '📅', label: 'Calendário Fiscal' }, { id: 'relatorios', icon: '📊', label: 'Relatórios' }] },
             { section: '🤖 Inteligência', items: [{ id: 'ia', icon: '✨', label: 'IA Tributária', badge: 'PRO' }, { id: 'config', icon: '⚙️', label: 'Configurações' }] },
           ].map(({ section, items }) => (
@@ -153,7 +154,8 @@ export default function Dashboard() {
         {activeMenu === 'calendario' && <Calendario />}
         {activeMenu === 'relatorios' && <Relatorios />}
         {activeMenu === 'config' && <Configuracoes />}
-        {!['clientes','obrigacoes','alertas','calendario','relatorios','config'].includes(activeMenu) && <>
+        {activeMenu === 'usuarios' && <Usuarios />}
+{!['clientes','obrigacoes','alertas','calendario','relatorios','config','usuarios'].includes(activeMenu) && <>
 
         {/* Topbar */}
         <div style={{ padding: '18px 32px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.surface, position: 'sticky', top: 0, zIndex: 10 }}>
