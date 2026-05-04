@@ -25,6 +25,7 @@ export default function Clientes() {
   const [showModal, setShowModal] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [editando, setEditando] = useState(false);
+  const [formEdicao, setFormEdicao] = useState({});
   const [form, setForm] = useState({
     nome: '', cpfCnpj: '', tipo: 'PJ', regimeTributario: 'SIMPLES_NACIONAL',
     email: '', telefone: '', cidade: '', estado: 'PE', cep: '',
@@ -76,6 +77,25 @@ export default function Clientes() {
     }
   };
 
+  const handleEditar = async () => {
+    setSalvando(true);
+    setErro('');
+    try {
+      const res = await api.put(`/clientes/${clienteSelecionado.id}`, {
+        ...formEdicao,
+        cpfCnpj: clienteSelecionado.cpfCnpj,
+        tipo: clienteSelecionado.tipo,
+      });
+      setClienteSelecionado(res.data);
+      setEditando(false);
+      carregarDados();
+    } catch (e) {
+      setErro(e.response?.data?.erro || 'Erro ao editar cliente');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   const getObrigacoesCliente = (clienteId) =>
     obrigacoes.filter(o => o.clienteId === clienteId);
 
@@ -115,7 +135,24 @@ export default function Clientes() {
         )}
         {clienteSelecionado && (
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setEditando(!editando)} style={{ padding: '10px 20px', borderRadius: '8px', border: `1px solid ${C.border}`, background: editando ? C.accent : 'transparent', color: editando ? '#fff' : C.text, fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+            <button onClick={() => {
+              if (!editando) {
+                setFormEdicao({
+                  nome: clienteSelecionado.nome,
+                  email: clienteSelecionado.email || '',
+                  telefone: clienteSelecionado.telefone || '',
+                  regimeTributario: clienteSelecionado.regimeTributario,
+                  cidade: clienteSelecionado.cidade || '',
+                  estado: clienteSelecionado.estado || '',
+                  cep: clienteSelecionado.cep || '',
+                  logradouro: clienteSelecionado.logradouro || '',
+                  numero: clienteSelecionado.numero || '',
+                  complemento: clienteSelecionado.complemento || '',
+                  bairro: clienteSelecionado.bairro || '',
+                });
+              }
+              setEditando(!editando);
+            }} style={{ padding: '10px 20px', borderRadius: '8px', border: `1px solid ${C.border}`, background: editando ? C.accent : 'transparent', color: editando ? '#fff' : C.text, fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
               {editando ? '✕ Cancelar' : '✏️ Editar'}
             </button>
             <button onClick={() => handleInativar(clienteSelecionado.id)} style={{ padding: '10px 20px', borderRadius: '8px', border: `1px solid ${C.red}`, background: 'transparent', color: C.red, fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
@@ -146,28 +183,56 @@ export default function Clientes() {
               </div>
 
               <div style={{ padding: '20px' }}>
-                {[
-                  { label: 'Tipo', value: clienteSelecionado.tipo === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física' },
-                  { label: 'Regime Tributário', value: clienteSelecionado.regimeTributario?.replace('_', ' ') },
-                  { label: 'E-mail', value: clienteSelecionado.email || '—' },
-                  { label: 'Telefone', value: clienteSelecionado.telefone || '—' },
-                  { label: 'Cidade / Estado', value: clienteSelecionado.cidade ? `${clienteSelecionado.cidade} / ${clienteSelecionado.estado}` : '—' },
-                  { label: 'CEP', value: clienteSelecionado.cep || '—' },
-                  { label: 'Endereço', value: clienteSelecionado.logradouro ? `${clienteSelecionado.logradouro}, ${clienteSelecionado.numero}${clienteSelecionado.complemento ? ` - ${clienteSelecionado.complemento}` : ''}` : '—' },
-                  { label: 'Bairro', value: clienteSelecionado.bairro || '—' },
-                  { label: 'Cadastrado em', value: new Date(clienteSelecionado.criadoEm).toLocaleDateString('pt-BR') },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
-                    <span style={{ fontSize: '12px', color: C.muted, fontWeight: 500 }}>{label}</span>
-                    <span style={{ fontSize: '13px', color: C.text, fontWeight: 500, textAlign: 'right', maxWidth: '60%' }}>{value}</span>
+                {editando ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {[
+                      ['Nome', 'nome', 'text'],
+                      ['E-mail', 'email', 'email'],
+                      ['Telefone', 'telefone', 'text'],
+                      ['CEP', 'cep', 'text'],
+                      ['Logradouro', 'logradouro', 'text'],
+                      ['Número', 'numero', 'text'],
+                      ['Complemento', 'complemento', 'text'],
+                      ['Bairro', 'bairro', 'text'],
+                      ['Cidade', 'cidade', 'text'],
+                      ['Estado', 'estado', 'text'],
+                    ].map(([label, field, type]) => (
+                      <div key={field}>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: C.muted, marginBottom: '4px', display: 'block' }}>{label}</label>
+                        <input type={type} value={formEdicao[field] || ''} onChange={e => setFormEdicao({ ...formEdicao, [field]: e.target.value })}
+                          style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', color: C.text, outline: 'none', background: C.surface2, boxSizing: 'border-box' }} />
+                      </div>
+                    ))}
+                    {erro && <p style={{ color: C.red, fontSize: '13px' }}>{erro}</p>}
+                    <button onClick={handleEditar} disabled={salvando} style={{ padding: '10px', borderRadius: '8px', border: 'none', background: C.accent, color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                      {salvando ? 'Salvando...' : '✓ Salvar Alterações'}
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  <>
+                    {[
+                      { label: 'Tipo', value: clienteSelecionado.tipo === 'PJ' ? 'Pessoa Jurídica' : 'Pessoa Física' },
+                      { label: 'Regime Tributário', value: clienteSelecionado.regimeTributario?.replace('_', ' ') },
+                      { label: 'E-mail', value: clienteSelecionado.email || '—' },
+                      { label: 'Telefone', value: clienteSelecionado.telefone || '—' },
+                      { label: 'Cidade / Estado', value: clienteSelecionado.cidade ? `${clienteSelecionado.cidade} / ${clienteSelecionado.estado}` : '—' },
+                      { label: 'CEP', value: clienteSelecionado.cep || '—' },
+                      { label: 'Endereço', value: clienteSelecionado.logradouro ? `${clienteSelecionado.logradouro}, ${clienteSelecionado.numero}${clienteSelecionado.complemento ? ` - ${clienteSelecionado.complemento}` : ''}` : '—' },
+                      { label: 'Bairro', value: clienteSelecionado.bairro || '—' },
+                      { label: 'Cadastrado em', value: new Date(clienteSelecionado.criadoEm).toLocaleDateString('pt-BR') },
+                    ].map(({ label, value }) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${C.border}` }}>
+                        <span style={{ fontSize: '12px', color: C.muted, fontWeight: 500 }}>{label}</span>
+                        <span style={{ fontSize: '13px', color: C.text, fontWeight: 500, textAlign: 'right', maxWidth: '60%' }}>{value}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
 
             {/* Resumo de obrigações */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* KPIs */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                 {(() => {
                   const obs = getObrigacoesCliente(clienteSelecionado.id);
@@ -188,7 +253,6 @@ export default function Clientes() {
                 })()}
               </div>
 
-              {/* Lista de obrigações */}
               <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, overflow: 'hidden', flex: 1 }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', color: C.text }}>Obrigações</div>
@@ -226,17 +290,8 @@ export default function Clientes() {
               </div>
             </div>
           </div>
-
-          {/* Observações */}
-          {clienteSelecionado.observacoes && (
-            <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, padding: '20px' }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', color: C.text, marginBottom: '8px' }}>Observações</div>
-              <div style={{ fontSize: '13px', color: C.muted }}>{clienteSelecionado.observacoes}</div>
-            </div>
-          )}
         </div>
       ) : (
-        /* Lista de clientes */
         <div style={{ padding: '24px 32px' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '48px', color: C.muted }}>Carregando...</div>
@@ -255,7 +310,8 @@ export default function Clientes() {
                 const obsCliente = getObrigacoesCliente(cliente.id);
                 const atrasadas = obsCliente.filter(o => o.atrasada).length;
                 return (
-                  <div key={cliente.id} onClick={() => setClienteSelecionado(cliente)} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr', padding: '16px 20px', borderTop: `1px solid ${C.border}`, alignItems: 'center', cursor: 'pointer', transition: 'background 0.1s' }}
+                  <div key={cliente.id} onClick={() => setClienteSelecionado(cliente)}
+                    style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr', padding: '16px 20px', borderTop: `1px solid ${C.border}`, alignItems: 'center', cursor: 'pointer' }}
                     onMouseEnter={e => e.currentTarget.style.background = C.surface2}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -295,7 +351,6 @@ export default function Clientes() {
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: C.muted }}>✕</button>
             </div>
             <div style={{ padding: '24px 26px' }}>
-
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Dados Principais</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
@@ -380,7 +435,6 @@ export default function Clientes() {
                     style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: C.text, outline: 'none', background: C.surface2, boxSizing: 'border-box' }} />
                 </div>
               </div>
-
               {erro && <p style={{ color: C.red, fontSize: '13px', marginTop: '12px' }}>{erro}</p>}
             </div>
             <div style={{ padding: '16px 26px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end', gap: '10px', position: 'sticky', bottom: 0, background: C.surface }}>
