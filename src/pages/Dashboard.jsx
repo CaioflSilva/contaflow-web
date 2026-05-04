@@ -4,6 +4,8 @@ import api from '../services/api';
 import Clientes from './Clientes';
 import Obrigacoes from './Obrigacoes';
 import Alertas from './Alertas';
+import Calendario from './Calendario';
+import Relatorios from './Relatorios';
 
 const C = {
   bg: '#f0f4f8', surface: '#ffffff', surface2: '#f8fafc',
@@ -142,7 +144,9 @@ export default function Dashboard() {
               {activeMenu === 'clientes' && <Clientes />}
               {activeMenu === 'obrigacoes' && <Obrigacoes />}
               {activeMenu === 'alertas' && <Alertas />}
-              {!['clientes','obrigacoes','alertas'].includes(activeMenu) && <>
+            {activeMenu === 'calendario' && <Calendario />}
+            {activeMenu === 'relatorios' && <Relatorios />}
+            {!['clientes','obrigacoes','alertas','calendario','relatorios'].includes(activeMenu) && <>
 
               {/* Topbar */}
               <div style={{ padding: '18px 32px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.surface, position: 'sticky', top: 0, zIndex: 10 }}>
