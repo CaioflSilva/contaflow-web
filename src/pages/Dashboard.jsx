@@ -162,7 +162,7 @@ export default function Dashboard() {
                     {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })}
                   </div>
                   <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#7c3aed,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '12px', color: '#fff' }}>C</div>
-                  <button onClick={() => setShowModal(true)} style={{ padding: '8px 18px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', border: 'none', background: C.accent, color: '#fff', fontWeight: 600 }}>
+                  <button onClick={() => setActiveMenu('clientes')} style={{ padding: '8px 18px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', border: 'none', background: C.accent, color: '#fff', fontWeight: 600 }}>
                     + Novo Cliente
                   </button>
                 </div>
