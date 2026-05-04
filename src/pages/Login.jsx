@@ -79,13 +79,17 @@ export default function Login() {
 }
 
 const styles = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-  },
+ container: {
+     minHeight: '100vh',
+     width: '100vw',
+     display: 'flex',
+     alignItems: 'center',
+     justifyContent: 'center',
+     background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+     margin: 0,
+     padding: 0,
+     boxSizing: 'border-box',
+   },
   card: {
     background: '#1e1e2e',
     borderRadius: '16px',
