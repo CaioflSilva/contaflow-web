@@ -153,7 +153,7 @@ export default function Dashboard() {
         {activeMenu === 'calendario' && <Calendario />}
         {activeMenu === 'relatorios' && <Relatorios />}
         {activeMenu === 'config' && <Configuracoes />}
-        {!['clientes','obrigacoes','alertas','calendario','relatorios'].includes(activeMenu) && <>
+        {!['clientes','obrigacoes','alertas','calendario','relatorios','config'].includes(activeMenu) && <>
 
         {/* Topbar */}
         <div style={{ padding: '18px 32px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.surface, position: 'sticky', top: 0, zIndex: 10 }}>
