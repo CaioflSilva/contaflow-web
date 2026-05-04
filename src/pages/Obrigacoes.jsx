@@ -76,6 +76,16 @@ export default function Obrigacoes() {
     }
   };
 
+  const handleDeletar = async (id) => {
+    if (!confirm('Deseja excluir esta obrigação?')) return;
+    try {
+      await api.delete(`/obrigacoes/${id}`);
+      carregarDados();
+    } catch (e) {
+      alert('Erro ao excluir obrigação');
+    }
+  };
+
   const getDias = (prazo) => Math.ceil((new Date(prazo) - new Date()) / 86400000);
 
   const getStatusColor = (ob) => {
@@ -133,14 +143,14 @@ export default function Obrigacoes() {
           </div>
         ) : (
           <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 160px', padding: '12px 20px', background: C.surface2, fontSize: '11px', fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 190px', padding: '12px 20px', background: C.surface2, fontSize: '11px', fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               <div>Cliente</div><div>Tipo</div><div>Competência</div><div>Prazo</div><div>Status</div><div>Ações</div>
             </div>
             {obrigacoesFiltradas.map((ob) => {
               const statusStyle = getStatusColor(ob);
               const dias = getDias(ob.prazo);
               return (
-                <div key={ob.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 160px', padding: '14px 20px', borderTop: `1px solid ${C.border}`, alignItems: 'center' }}>
+                <div key={ob.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 190px', padding: '14px 20px', borderTop: `1px solid ${C.border}`, alignItems: 'center' }}>
                   <div style={{ fontWeight: 600, fontSize: '13px', color: C.text }}>{getClienteNome(ob.clienteId)}</div>
                   <div>
                     <span style={{ display: 'inline-flex', padding: '3px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: '#6366f122', color: C.accent, border: '1px solid #6366f133' }}>
@@ -163,12 +173,15 @@ export default function Obrigacoes() {
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     {ob.status !== 'ENTREGUE' && (
-                      <button onClick={() => handleEntregar(ob.id)} style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', background: C.green, color: '#fff', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}>
+                      <button onClick={() => handleEntregar(ob.id)} title="Marcar como entregue" style={{ padding: '6px 10px', borderRadius: '6px', border: 'none', background: C.green, color: '#fff', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}>
                         ✓
                       </button>
                     )}
                     <button onClick={() => handleNotificar(ob.id)} title="Notificar cliente por e-mail" style={{ padding: '6px 10px', borderRadius: '6px', border: `1px solid ${C.accent}`, background: 'transparent', color: C.accent, fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}>
                       📧
+                    </button>
+                    <button onClick={() => handleDeletar(ob.id)} title="Excluir obrigação" style={{ padding: '6px 10px', borderRadius: '6px', border: `1px solid ${C.red}`, background: 'transparent', color: C.red, fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}>
+                      🗑️
                     </button>
                   </div>
                 </div>
