@@ -26,6 +26,8 @@ export default function Clientes() {
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [editando, setEditando] = useState(false);
   const [formEdicao, setFormEdicao] = useState({});
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [cnpjStatus, setCnpjStatus] = useState('');
   const [form, setForm] = useState({
     nome: '', cpfCnpj: '', tipo: 'PJ', regimeTributario: 'SIMPLES_NACIONAL',
     email: '', telefone: '', cidade: '', estado: 'PE', cep: '',
@@ -51,12 +53,49 @@ export default function Clientes() {
     }
   };
 
+  const buscarCnpj = async (cnpj) => {
+    const cnpjLimpo = cnpj.replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+      setCnpjStatus('');
+      return;
+    }
+    setBuscandoCnpj(true);
+    setCnpjStatus('🔍 Consultando Receita Federal...');
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      if (!res.ok) {
+        setCnpjStatus('❌ CNPJ não encontrado');
+        return;
+      }
+      const data = await res.json();
+      setForm(prev => ({
+        ...prev,
+        nome: data.razao_social || prev.nome,
+        email: data.email || prev.email,
+        telefone: data.ddd_telefone_1 ? data.ddd_telefone_1.replace(/\D/g, '').replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3') : prev.telefone,
+        cep: data.cep ? data.cep.replace(/\D/g, '') : prev.cep,
+        logradouro: data.logradouro || prev.logradouro,
+        numero: data.numero || prev.numero,
+        complemento: data.complemento || prev.complemento,
+        bairro: data.bairro || prev.bairro,
+        cidade: data.municipio || prev.cidade,
+        estado: data.uf || prev.estado,
+      }));
+      setCnpjStatus('✅ Dados preenchidos automaticamente!');
+    } catch (e) {
+      setCnpjStatus('❌ Erro ao consultar CNPJ');
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
+
   const handleSalvar = async () => {
     setSalvando(true);
     setErro('');
     try {
       await api.post('/clientes', form);
       setShowModal(false);
+      setCnpjStatus('');
       setForm({ nome: '', cpfCnpj: '', tipo: 'PJ', regimeTributario: 'SIMPLES_NACIONAL', email: '', telefone: '', cidade: '', estado: 'PE', cep: '', logradouro: '', numero: '', complemento: '', bairro: '' });
       carregarDados();
     } catch (e) {
@@ -181,8 +220,6 @@ export default function Clientes() {
       {clienteSelecionado ? (
         <div style={{ padding: '24px 32px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-
-            {/* Dados do cliente */}
             <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: avatarColors[clientes.indexOf(clienteSelecionado) % avatarColors.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff' }}>
@@ -196,7 +233,6 @@ export default function Clientes() {
                   {clienteSelecionado.ativo ? 'Ativo' : 'Inativo'}
                 </span>
               </div>
-
               <div style={{ padding: '20px' }}>
                 {editando ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -246,7 +282,6 @@ export default function Clientes() {
               </div>
             </div>
 
-            {/* Resumo de obrigações */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                 {(() => {
@@ -371,16 +406,22 @@ export default function Clientes() {
             <div style={{ padding: '24px 26px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Dados Principais</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: C.muted, marginBottom: '5px', display: 'block' }}>Nome / Razão Social *</label>
-                  <input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Nome da empresa ou pessoa"
-                    style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: C.text, outline: 'none', background: C.surface2, boxSizing: 'border-box' }} />
-                </div>
+
+                {/* CNPJ com busca automática */}
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 600, color: C.muted, marginBottom: '5px', display: 'block' }}>CNPJ / CPF *</label>
-                  <input value={form.cpfCnpj} onChange={e => setForm({ ...form, cpfCnpj: e.target.value })} placeholder="00.000.000/0001-00"
+                  <input value={form.cpfCnpj} onChange={e => {
+                    setForm({ ...form, cpfCnpj: e.target.value });
+                    buscarCnpj(e.target.value);
+                  }} placeholder="00.000.000/0001-00"
                     style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: C.text, outline: 'none', background: C.surface2, boxSizing: 'border-box' }} />
+                  {cnpjStatus && (
+                    <div style={{ fontSize: '11px', marginTop: '4px', color: cnpjStatus.includes('✅') ? C.green : cnpjStatus.includes('❌') ? C.red : C.accent }}>
+                      {cnpjStatus}
+                    </div>
+                  )}
                 </div>
+
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 600, color: C.muted, marginBottom: '5px', display: 'block' }}>Tipo</label>
                   <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })}
@@ -389,6 +430,13 @@ export default function Clientes() {
                     <option value="PF">Pessoa Física</option>
                   </select>
                 </div>
+
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: C.muted, marginBottom: '5px', display: 'block' }}>Nome / Razão Social *</label>
+                  <input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Preenchido automaticamente pelo CNPJ"
+                    style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 14px', fontSize: '13px', color: C.text, outline: 'none', background: buscandoCnpj ? C.surface2 : C.surface2, boxSizing: 'border-box' }} />
+                </div>
+
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={{ fontSize: '12px', fontWeight: 600, color: C.muted, marginBottom: '5px', display: 'block' }}>Regime Tributário</label>
                   <select value={form.regimeTributario} onChange={e => setForm({ ...form, regimeTributario: e.target.value })}
@@ -456,9 +504,9 @@ export default function Clientes() {
               {erro && <p style={{ color: C.red, fontSize: '13px', marginTop: '12px' }}>{erro}</p>}
             </div>
             <div style={{ padding: '16px 26px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end', gap: '10px', position: 'sticky', bottom: 0, background: C.surface }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '10px 20px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text, fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={handleSalvar} disabled={salvando} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: C.accent, color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
-                {salvando ? 'Salvando...' : 'Salvar Cliente'}
+              <button onClick={() => { setShowModal(false); setCnpjStatus(''); }} style={{ padding: '10px 20px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text, fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={handleSalvar} disabled={salvando || buscandoCnpj} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: C.accent, color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+                {salvando ? 'Salvando...' : buscandoCnpj ? 'Buscando CNPJ...' : 'Salvar Cliente'}
               </button>
             </div>
           </div>
