@@ -6,6 +6,7 @@ import Obrigacoes from './Obrigacoes';
 import Alertas from './Alertas';
 import Calendario from './Calendario';
 import Relatorios from './Relatorios';
+import Configuracoes from './Configuracoes';
 
 const C = {
   bg: '#f0f4f8', surface: '#ffffff', surface2: '#f8fafc',
@@ -151,6 +152,7 @@ export default function Dashboard() {
         {activeMenu === 'alertas' && <Alertas />}
         {activeMenu === 'calendario' && <Calendario />}
         {activeMenu === 'relatorios' && <Relatorios />}
+        {activeMenu === 'config' && <Configuracoes />}
         {!['clientes','obrigacoes','alertas','calendario','relatorios'].includes(activeMenu) && <>
 
         {/* Topbar */}
