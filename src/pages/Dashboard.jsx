@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const C = {
-  bg: '#080c14', surface: '#0d1117', surface2: '#161b27',
-  border: '#1e2736', accent: '#00d4ff', accent2: '#7c3aed',
+  bg: '#f0f4f8', surface: '#ffffff', surface2: '#f8fafc',
+  border: '#e2e8f0', accent: '#6366f1', accent2: '#7c3aed',
   green: '#10b981', yellow: '#f59e0b', red: '#ef4444',
-  text: '#e2e8f0', muted: '#64748b', card: '#0d1520',
+  text: '#1e293b', muted: '#64748b', card: '#ffffff',
 };
 
 const Badge = ({ children, color }) => (
