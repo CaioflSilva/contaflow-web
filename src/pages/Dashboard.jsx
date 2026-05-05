@@ -8,6 +8,7 @@ import Calendario from './Calendario';
 import Relatorios from './Relatorios';
 import Configuracoes from './Configuracoes';
 import Usuarios from './Usuarios';
+import Historico from './Historico';
 
 const C = {
   bg: '#f0f4f8', surface: '#ffffff', surface2: '#f8fafc',
@@ -153,7 +154,7 @@ export default function Dashboard() {
         <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
           {[
             { section: '📁 Gestão', items: [{ id: 'dashboard', icon: '⬛', label: 'Visão Geral' }, { id: 'clientes', icon: '👥', label: 'Clientes' }, { id: 'obrigacoes', icon: '📋', label: 'Obrigações' }, { id: 'usuarios', icon: '👤', label: 'Equipe' }] },
-            { section: '📊 Monitoramento', items: [{ id: 'alertas', icon: '🔔', label: 'Alertas', badge: obrigacoesAtrasadas.length }, { id: 'calendario', icon: '📅', label: 'Calendário Fiscal' }, { id: 'relatorios', icon: '📊', label: 'Relatórios' }] },
+            { section: '📊 Monitoramento', items: [{ id: 'alertas', icon: '🔔', label: 'Alertas', badge: obrigacoesAtrasadas.length }, { id: 'calendario', icon: '📅', label: 'Calendário Fiscal' }, { id: 'relatorios', icon: '📊', label: 'Relatórios' }, { id: 'historico', icon: '🕐', label: 'Histórico' }] },
             { section: '🤖 Inteligência', items: [{ id: 'ia', icon: '✨', label: 'IA Tributária', badge: 'PRO' }, { id: 'config', icon: '⚙️', label: 'Configurações' }] },
           ].map(({ section, items }) => (
             <div key={section}>
@@ -200,7 +201,8 @@ export default function Dashboard() {
         {activeMenu === 'relatorios' && <Relatorios />}
         {activeMenu === 'config' && <Configuracoes />}
         {activeMenu === 'usuarios' && <Usuarios />}
-        {!['clientes','obrigacoes','alertas','calendario','relatorios','config','usuarios'].includes(activeMenu) && <>
+        {activeMenu === 'historico' && <Historico />}
+        {!['clientes','obrigacoes','alertas','calendario','relatorios','config','usuarios','historico'].includes(activeMenu) && <>
 
         {/* Topbar */}
         <div style={{ padding: '18px 32px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.surface, position: 'sticky', top: 0, zIndex: 10 }}>
@@ -209,8 +211,6 @@ export default function Dashboard() {
             <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>Resumo inteligente de obrigações e riscos fiscais</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-
-            {/* Busca global */}
             <div style={{ position: 'relative' }}>
               <input
                 value={busca}
@@ -244,7 +244,6 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: C.green }}>
               <div style={{ width: '6px', height: '6px', background: C.green, borderRadius: '50%', boxShadow: `0 0 6px ${C.green}` }} /> Ao vivo
             </div>
@@ -259,8 +258,6 @@ export default function Dashboard() {
         </div>
 
         <div style={{ padding: '28px 32px', flex: 1 }}>
-
-          {/* CARDS */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) 1.2fr', gap: '16px', marginBottom: '28px' }}>
             <div style={{ background: 'rgba(239,68,68,0.06)', border: `1px solid rgba(239,68,68,0.3)`, borderRadius: '12px', padding: '20px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: C.red }} />
@@ -307,7 +304,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* MAIN GRID */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px', marginBottom: '24px' }}>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -359,7 +355,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Alertas */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '13px', color: C.text }}>🔔 Alertas Ativos</div>
@@ -398,7 +393,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* BOTTOM GRID */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -436,7 +430,6 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Gráfico com dados reais */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
