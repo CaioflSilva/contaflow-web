@@ -6,6 +6,7 @@ export default function Registrar() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [form, setForm] = useState({
     nomeEscritorio: '',
     cnpj: '',
@@ -18,6 +19,10 @@ export default function Registrar() {
   const navigate = useNavigate();
 
   const handleRegistrar = async () => {
+    if (!aceitouTermos) {
+      setErro('Você precisa aceitar os Termos de Uso e a Política de Privacidade');
+      return;
+    }
     if (form.senha !== form.confirmarSenha) {
       setErro('As senhas não coincidem');
       return;
@@ -65,7 +70,25 @@ export default function Registrar() {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ color: '#6366f1', fontSize: '28px', fontWeight: 800, margin: 0 }}>ContaFlow</h1>
+          <svg width="60" height="60" viewBox="0 0 160 160" style={{ marginBottom: '8px' }}>
+            <polygon points="80,10 140,45 140,115 80,150 20,115 20,45" fill="none" stroke="#6366f1" strokeWidth="4"/>
+            <polygon points="80,32 118,54 118,98 80,120 42,98 42,54" fill="none" stroke="#818cf8" strokeWidth="2.5" opacity="0.6"/>
+            <line x1="80" y1="15" x2="80" y2="145" stroke="#6366f1" strokeWidth="2" opacity="0.3"/>
+            <line x1="15" y1="80" x2="145" y2="80" stroke="#6366f1" strokeWidth="2" opacity="0.3"/>
+            <line x1="20" y1="45" x2="140" y2="115" stroke="#6366f1" strokeWidth="1.5" opacity="0.25"/>
+            <line x1="140" y1="45" x2="20" y2="115" stroke="#6366f1" strokeWidth="1.5" opacity="0.25"/>
+            <circle cx="80" cy="80" r="12" fill="#6366f1"/>
+            <circle cx="80" cy="80" r="6" fill="#c7d2fe"/>
+            <circle cx="80" cy="10" r="5" fill="#818cf8"/>
+            <circle cx="140" cy="45" r="5" fill="#818cf8"/>
+            <circle cx="140" cy="115" r="5" fill="#818cf8"/>
+            <circle cx="80" cy="150" r="5" fill="#818cf8"/>
+            <circle cx="20" cy="115" r="5" fill="#818cf8"/>
+            <circle cx="20" cy="45" r="5" fill="#818cf8"/>
+          </svg>
+          <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: 800, margin: 0 }}>
+            <span style={{ color: '#fff' }}>Conta</span><span style={{ color: '#6366f1' }}>Flow</span>
+          </h1>
           <p style={{ color: '#888', fontSize: '13px', margin: '6px 0 0' }}>Crie sua conta gratuitamente</p>
         </div>
 
@@ -86,7 +109,7 @@ export default function Registrar() {
           ))}
         </div>
 
-        {/* Step 1 — Dados do escritório */}
+        {/* Step 1 */}
         {step === 1 && (
           <div>
             <div style={{ marginBottom: '16px' }}>
@@ -105,25 +128,21 @@ export default function Registrar() {
               <label style={label}>Telefone</label>
               <input value={form.telefone} onChange={e => setForm({ ...form, telefone: e.target.value })} placeholder="(81) 99999-9999" style={input} />
             </div>
-
             {erro && <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', textAlign: 'center' }}>{erro}</p>}
-
-            <button
-              onClick={() => {
-                if (!form.nomeEscritorio || !form.cnpj || !form.email) {
-                  setErro('Preencha os campos obrigatórios');
-                  return;
-                }
-                setErro('');
-                setStep(2);
-              }}
-              style={{ width: '100%', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => {
+              if (!form.nomeEscritorio || !form.cnpj || !form.email) {
+                setErro('Preencha os campos obrigatórios');
+                return;
+              }
+              setErro('');
+              setStep(2);
+            }} style={{ width: '100%', background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>
               Continuar →
             </button>
           </div>
         )}
 
-        {/* Step 2 — Dados de acesso */}
+        {/* Step 2 */}
         {step === 2 && (
           <div>
             <div style={{ marginBottom: '16px' }}>
@@ -140,7 +159,7 @@ export default function Registrar() {
             </div>
 
             {/* Requisitos */}
-            <div style={{ background: '#16172a', borderRadius: '8px', padding: '12px', marginBottom: '20px', border: '1px solid #2a2a3e' }}>
+            <div style={{ background: '#16172a', borderRadius: '8px', padding: '12px', marginBottom: '16px', border: '1px solid #2a2a3e' }}>
               {[
                 ['Mínimo 8 caracteres', form.senha.length >= 8],
                 ['Letra maiúscula', /[A-Z]/.test(form.senha)],
@@ -153,13 +172,27 @@ export default function Registrar() {
               ))}
             </div>
 
+            {/* Checkbox termos */}
+            <div onClick={() => setAceitouTermos(!aceitouTermos)} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '20px', cursor: 'pointer', padding: '12px', borderRadius: '8px', border: `1px solid ${aceitouTermos ? '#6366f1' : '#3a3a5e'}`, background: aceitouTermos ? '#6366f111' : 'transparent' }}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: `2px solid ${aceitouTermos ? '#6366f1' : '#555'}`, background: aceitouTermos ? '#6366f1' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
+                {aceitouTermos && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>✓</span>}
+              </div>
+              <span style={{ fontSize: '12px', color: '#aaa', lineHeight: 1.5 }}>
+                Li e aceito os{' '}
+                <span style={{ color: '#6366f1' }}>Termos de Uso</span>
+                {' '}e a{' '}
+                <span style={{ color: '#6366f1' }}>Política de Privacidade</span>
+                {' '}do ContaFlow. Concordo com o tratamento dos meus dados conforme a LGPD.
+              </span>
+            </div>
+
             {erro && <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', textAlign: 'center' }}>{erro}</p>}
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button onClick={() => { setStep(1); setErro(''); }} style={{ flex: 1, background: '#2a2a3e', color: '#ccc', border: '1px solid #3a3a5e', borderRadius: '8px', padding: '14px', fontSize: '14px', cursor: 'pointer' }}>
                 ← Voltar
               </button>
-              <button onClick={handleRegistrar} disabled={loading} style={{ flex: 2, background: '#6366f1', color: '#fff', border: 'none', borderRadius: '8px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={handleRegistrar} disabled={loading || !aceitouTermos} style={{ flex: 2, background: aceitouTermos ? '#6366f1' : '#3a3a5e', color: aceitouTermos ? '#fff' : '#666', border: 'none', borderRadius: '8px', padding: '14px', fontSize: '15px', fontWeight: 600, cursor: aceitouTermos ? 'pointer' : 'not-allowed' }}>
                 {loading ? 'Criando conta...' : '🚀 Criar Conta'}
               </button>
             </div>
