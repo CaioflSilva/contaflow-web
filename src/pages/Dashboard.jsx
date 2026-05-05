@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [clientes, setClientes] = useState([]);
   const [obrigacoesVencendo, setObrigacoesVencendo] = useState([]);
   const [obrigacoesAtrasadas, setObrigacoesAtrasadas] = useState([]);
+  const [plano, setPlano] = useState({ nome: 'FREE', maxClientes: 3 });
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const navigate = useNavigate();
@@ -49,14 +50,16 @@ export default function Dashboard() {
 
   const carregarDados = async () => {
     try {
-      const [clientesRes, vencendoRes, atrasadasRes] = await Promise.all([
+      const [clientesRes, vencendoRes, atrasadasRes, planoRes] = await Promise.all([
         api.get('/clientes'),
         api.get('/obrigacoes/vencendo?dias=30'),
         api.get('/obrigacoes/atrasadas'),
+        api.get('/tenant/plano'),
       ]);
       setClientes(clientesRes.data.content || []);
       setObrigacoesVencendo(vencendoRes.data || []);
       setObrigacoesAtrasadas(atrasadasRes.data || []);
+      setPlano(planoRes.data || { nome: 'FREE', maxClientes: 3 });
     } catch (error) {
       console.error(error);
     } finally {
@@ -109,7 +112,7 @@ export default function Dashboard() {
 
         <nav style={{ flex: 1, padding: '16px 0', overflowY: 'auto' }}>
           {[
-          { section: '📁 Gestão', items: [{ id: 'dashboard', icon: '⬛', label: 'Visão Geral' }, { id: 'clientes', icon: '👥', label: 'Clientes' }, { id: 'obrigacoes', icon: '📋', label: 'Obrigações' }, { id: 'usuarios', icon: '👤', label: 'Equipe' }] },
+            { section: '📁 Gestão', items: [{ id: 'dashboard', icon: '⬛', label: 'Visão Geral' }, { id: 'clientes', icon: '👥', label: 'Clientes' }, { id: 'obrigacoes', icon: '📋', label: 'Obrigações' }, { id: 'usuarios', icon: '👤', label: 'Equipe' }] },
             { section: '📊 Monitoramento', items: [{ id: 'alertas', icon: '🔔', label: 'Alertas', badge: obrigacoesAtrasadas.length }, { id: 'calendario', icon: '📅', label: 'Calendário Fiscal' }, { id: 'relatorios', icon: '📊', label: 'Relatórios' }] },
             { section: '🤖 Inteligência', items: [{ id: 'ia', icon: '✨', label: 'IA Tributária', badge: 'PRO' }, { id: 'config', icon: '⚙️', label: 'Configurações' }] },
           ].map(({ section, items }) => (
@@ -132,12 +135,19 @@ export default function Dashboard() {
         </nav>
 
         <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.border}` }}>
-          <div style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '12px', color: '#fff' }}>Plano Pro</div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', marginTop: '2px' }}>{clientes.length} / 100 clientes</div>
-            <div style={{ marginTop: '8px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }}>
-              <div style={{ height: '100%', width: `${(clientes.length / 100) * 100}%`, background: '#fff', borderRadius: '2px' }} />
+          <div style={{ background: plano.nome === 'FREE' ? '#1e293b' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '12px', color: '#fff' }}>
+              Plano {plano.nome}
             </div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', marginTop: '2px' }}>
+              {clientes.length} / {plano.maxClientes} clientes
+            </div>
+            <div style={{ marginTop: '8px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }}>
+              <div style={{ height: '100%', width: `${Math.min((clientes.length / plano.maxClientes) * 100, 100)}%`, background: clientes.length >= plano.maxClientes ? '#ef4444' : '#fff', borderRadius: '2px' }} />
+            </div>
+            {clientes.length >= plano.maxClientes && (
+              <div style={{ fontSize: '9px', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>⚠ Limite atingido!</div>
+            )}
           </div>
           <div onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: C.muted, fontSize: '11px', padding: '6px 0' }}>
             🚪 Sair da conta
@@ -155,7 +165,7 @@ export default function Dashboard() {
         {activeMenu === 'relatorios' && <Relatorios />}
         {activeMenu === 'config' && <Configuracoes />}
         {activeMenu === 'usuarios' && <Usuarios />}
-{!['clientes','obrigacoes','alertas','calendario','relatorios','config','usuarios'].includes(activeMenu) && <>
+        {!['clientes','obrigacoes','alertas','calendario','relatorios','config','usuarios'].includes(activeMenu) && <>
 
         {/* Topbar */}
         <div style={{ padding: '18px 32px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.surface, position: 'sticky', top: 0, zIndex: 10 }}>
