@@ -48,6 +48,10 @@ export default function Dashboard() {
   const [obrigacoesAtrasadas, setObrigacoesAtrasadas] = useState([]);
   const [plano, setPlano] = useState({ nome: 'FREE', maxClientes: 3 });
   const [stats, setStats] = useState({ graficoMensal: [], distribuicaoRegime: {} });
+  const [busca, setBusca] = useState('');
+  const [resultadosBusca, setResultadosBusca] = useState([]);
+  const [buscando, setBuscando] = useState(false);
+  const [showBusca, setShowBusca] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const navigate = useNavigate();
@@ -84,6 +88,21 @@ export default function Dashboard() {
     }
   };
 
+  const handleBusca = async (termo) => {
+    setBusca(termo);
+    if (termo.length < 2) { setResultadosBusca([]); setShowBusca(false); return; }
+    setBuscando(true);
+    setShowBusca(true);
+    try {
+      const res = await api.get(`/clientes/buscar?nome=${termo}`);
+      setResultadosBusca(res.data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBuscando(false);
+    }
+  };
+
   const handleLogout = () => { localStorage.clear(); navigate('/login'); };
   const getDias = (prazo) => Math.ceil((new Date(prazo) - new Date()) / 86400000);
   const getRiskLevel = (ob) => {
@@ -106,13 +125,9 @@ export default function Dashboard() {
     obrigacoesVencendo.some(o => o.clienteId === c.id && getDias(o.prazo) <= 3)
   );
 
-  // Gráfico mensal — normaliza para 0-100%
   const grafico = stats.graficoMensal || [];
   const maxGrafico = Math.max(...grafico.map(m => (m.entregues || 0) + (m.pendentes || 0) + (m.atrasadas || 0)), 1);
-
-  // Distribuição por regime
   const distribuicao = stats.distribuicaoRegime || {};
-  const totalRegime = Object.values(distribuicao).reduce((a, b) => a + b, 0);
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg, fontFamily: "'DM Mono', monospace" }}>
@@ -194,6 +209,42 @@ export default function Dashboard() {
             <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>Resumo inteligente de obrigações e riscos fiscais</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+
+            {/* Busca global */}
+            <div style={{ position: 'relative' }}>
+              <input
+                value={busca}
+                onChange={e => handleBusca(e.target.value)}
+                onBlur={() => setTimeout(() => setShowBusca(false), 200)}
+                placeholder="🔍 Buscar cliente..."
+                style={{ padding: '8px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, fontSize: '12px', color: C.text, outline: 'none', background: C.surface2, width: '200px' }}
+              />
+              {showBusca && (
+                <div style={{ position: 'absolute', top: '38px', left: 0, width: '280px', background: C.surface, borderRadius: '10px', border: `1px solid ${C.border}`, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100, overflow: 'hidden' }}>
+                  {buscando ? (
+                    <div style={{ padding: '16px', textAlign: 'center', fontSize: '12px', color: C.muted }}>Buscando...</div>
+                  ) : resultadosBusca.length === 0 ? (
+                    <div style={{ padding: '16px', textAlign: 'center', fontSize: '12px', color: C.muted }}>Nenhum resultado encontrado</div>
+                  ) : (
+                    resultadosBusca.map((c, i) => (
+                      <div key={c.id} onClick={() => { setBusca(''); setShowBusca(false); handleMenuChange('clientes'); }}
+                        style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}
+                        onMouseEnter={e => e.currentTarget.style.background = C.surface2}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: avatarGradients[i % avatarGradients.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                          {getClienteInitials(c.nome)}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: C.text }}>{c.nome}</div>
+                          <div style={{ fontSize: '11px', color: C.muted }}>{c.cpfCnpj} · {c.regimeTributario?.replace('_', ' ')}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: C.green }}>
               <div style={{ width: '6px', height: '6px', background: C.green, borderRadius: '50%', boxShadow: `0 0 6px ${C.green}` }} /> Ao vivo
             </div>
