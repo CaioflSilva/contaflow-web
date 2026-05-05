@@ -36,6 +36,23 @@ export default function Relatorios() {
     }
   };
 
+  const handleExportarPDF = () => {
+    const style = document.createElement('style');
+    style.id = 'print-style';
+    style.innerHTML = `
+      @media print {
+        body * { visibility: hidden; }
+        #relatorio-pdf, #relatorio-pdf * { visibility: visible; }
+        #relatorio-pdf { position: absolute; left: 0; top: 0; width: 100%; }
+        .no-print { display: none !important; }
+        @page { margin: 20mm; }
+      }
+    `;
+    document.head.appendChild(style);
+    window.print();
+    document.head.removeChild(style);
+  };
+
   const entregues = obrigacoes.filter(o => o.status === 'ENTREGUE');
   const pendentes = obrigacoes.filter(o => o.status === 'PENDENTE' && !o.atrasada);
   const taxaEntrega = obrigacoes.length > 0 ? Math.round((entregues.length / obrigacoes.length) * 100) : 0;
@@ -63,17 +80,25 @@ export default function Relatorios() {
   return (
     <div style={{ flex: 1, background: C.bg, minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="no-print" style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '17px', color: C.text }}>Relatórios</div>
           <div style={{ fontSize: '12px', color: C.muted, marginTop: '2px' }}>Visão analítica do escritório</div>
         </div>
-        <button onClick={() => window.print()} style={{ padding: '10px 20px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.surface2, color: C.text, fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
-          🖨️ Imprimir
+        <button onClick={handleExportarPDF} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: C.accent, color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
+          📄 Exportar PDF
         </button>
       </div>
 
-      <div style={{ padding: '24px 32px' }}>
+      <div id="relatorio-pdf" style={{ padding: '24px 32px' }}>
+
+        {/* Cabeçalho do relatório — visível apenas no PDF */}
+        <div style={{ display: 'none' }} className="print-header">
+          <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: `2px solid ${C.accent}`, paddingBottom: '16px' }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '24px', color: C.accent }}>ContaFlow</div>
+            <div style={{ fontSize: '14px', color: C.muted, marginTop: '4px' }}>Relatório Gerencial — {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+          </div>
+        </div>
 
         {/* KPIs principais */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
@@ -143,7 +168,7 @@ export default function Relatorios() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
           {/* Tipos de obrigações */}
           <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, padding: '20px' }}>
@@ -181,7 +206,7 @@ export default function Relatorios() {
                 <div style={{ fontSize: '13px' }}>Nenhum cliente em risco!</div>
               </div>
             ) : (
-              clientesComRisco.map((cliente, i) => {
+              clientesComRisco.map((cliente) => {
                 const qtdAtrasadas = obrigacoesAtrasadas.filter(o => o.clienteId === cliente.id).length;
                 return (
                   <div key={cliente.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${C.border}` }}>
@@ -201,6 +226,41 @@ export default function Relatorios() {
             )}
           </div>
         </div>
+
+        {/* Tabela completa de clientes */}
+        <div style={{ background: C.surface, borderRadius: '12px', border: `1px solid ${C.border}`, overflow: 'hidden', marginBottom: '20px' }}>
+          <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', color: C.text }}>Lista Completa de Clientes</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1fr', padding: '10px 20px', background: C.surface2, fontSize: '11px', fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div>Cliente</div><div>CNPJ/CPF</div><div>Regime</div><div>Status</div>
+          </div>
+          {clientes.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: C.muted, fontSize: '13px' }}>Nenhum cliente cadastrado</div>
+          ) : (
+            clientes.map((cliente) => {
+              const temAtrasada = obrigacoesAtrasadas.some(o => o.clienteId === cliente.id);
+              return (
+                <div key={cliente.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr 1fr', padding: '12px 20px', borderTop: `1px solid ${C.border}`, alignItems: 'center', fontSize: '12px' }}>
+                  <div style={{ fontWeight: 600, color: C.text }}>{cliente.nome}</div>
+                  <div style={{ color: C.muted }}>{cliente.cpfCnpj}</div>
+                  <div style={{ color: C.muted }}>{cliente.regimeTributario?.replace('_', ' ')}</div>
+                  <div>
+                    <span style={{ display: 'inline-flex', padding: '2px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, background: temAtrasada ? '#ef444422' : '#10b98122', color: temAtrasada ? C.red : C.green }}>
+                      {temAtrasada ? '⚠ Em risco' : '✓ Em dia'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Rodapé do relatório */}
+        <div style={{ textAlign: 'center', padding: '16px', color: C.muted, fontSize: '11px', borderTop: `1px solid ${C.border}` }}>
+          Relatório gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')} · ContaFlow — Gestão Contábil Inteligente
+        </div>
+
       </div>
     </div>
   );
