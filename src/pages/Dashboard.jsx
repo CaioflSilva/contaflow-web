@@ -16,6 +16,20 @@ const C = {
   text: '#1e293b', muted: '#475569', card: '#ffffff',
 };
 
+const regimeColors = {
+  MEI: C => C.green,
+  SIMPLES_NACIONAL: C => C.accent,
+  LUCRO_PRESUMIDO: C => C.accent2,
+  LUCRO_REAL: C => C.yellow,
+};
+
+const regimeLabels = {
+  MEI: 'MEI',
+  SIMPLES_NACIONAL: 'Simples Nacional',
+  LUCRO_PRESUMIDO: 'Lucro Presumido',
+  LUCRO_REAL: 'Lucro Real',
+};
+
 const Badge = ({ children, color }) => (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, background: `${color}22`, color, border: `1px solid ${color}33`, letterSpacing: '0.3px' }}>
     {children}
@@ -33,6 +47,7 @@ export default function Dashboard() {
   const [obrigacoesVencendo, setObrigacoesVencendo] = useState([]);
   const [obrigacoesAtrasadas, setObrigacoesAtrasadas] = useState([]);
   const [plano, setPlano] = useState({ nome: 'FREE', maxClientes: 3 });
+  const [stats, setStats] = useState({ graficoMensal: [], distribuicaoRegime: {} });
   const [loading, setLoading] = useState(true);
   const [activeMenu, setActiveMenu] = useState('dashboard');
   const navigate = useNavigate();
@@ -50,16 +65,18 @@ export default function Dashboard() {
 
   const carregarDados = async () => {
     try {
-      const [clientesRes, vencendoRes, atrasadasRes, planoRes] = await Promise.all([
+      const [clientesRes, vencendoRes, atrasadasRes, planoRes, statsRes] = await Promise.all([
         api.get('/clientes'),
         api.get('/obrigacoes/vencendo?dias=30'),
         api.get('/obrigacoes/atrasadas'),
         api.get('/tenant/plano'),
+        api.get('/dashboard/stats'),
       ]);
       setClientes(clientesRes.data.content || []);
       setObrigacoesVencendo(vencendoRes.data || []);
       setObrigacoesAtrasadas(atrasadasRes.data || []);
       setPlano(planoRes.data || { nome: 'FREE', maxClientes: 3 });
+      setStats(statsRes.data || { graficoMensal: [], distribuicaoRegime: {} });
     } catch (error) {
       console.error(error);
     } finally {
@@ -88,6 +105,14 @@ export default function Dashboard() {
     obrigacoesAtrasadas.some(o => o.clienteId === c.id) ||
     obrigacoesVencendo.some(o => o.clienteId === c.id && getDias(o.prazo) <= 3)
   );
+
+  // Gráfico mensal — normaliza para 0-100%
+  const grafico = stats.graficoMensal || [];
+  const maxGrafico = Math.max(...grafico.map(m => (m.entregues || 0) + (m.pendentes || 0) + (m.atrasadas || 0)), 1);
+
+  // Distribuição por regime
+  const distribuicao = stats.distribuicaoRegime || {};
+  const totalRegime = Object.values(distribuicao).reduce((a, b) => a + b, 0);
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg, fontFamily: "'DM Mono', monospace" }}>
@@ -136,12 +161,8 @@ export default function Dashboard() {
 
         <div style={{ padding: '16px 20px', borderTop: `1px solid ${C.border}` }}>
           <div style={{ background: plano.nome === 'FREE' ? '#1e293b' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '12px', color: '#fff' }}>
-              Plano {plano.nome}
-            </div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', marginTop: '2px' }}>
-              {clientes.length} / {plano.maxClientes} clientes
-            </div>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '12px', color: '#fff' }}>Plano {plano.nome}</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px', marginTop: '2px' }}>{clientes.length} / {plano.maxClientes} clientes</div>
             <div style={{ marginTop: '8px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }}>
               <div style={{ height: '100%', width: `${Math.min((clientes.length / plano.maxClientes) * 100, 100)}%`, background: clientes.length >= plano.maxClientes ? '#ef4444' : '#fff', borderRadius: '2px' }} />
             </div>
@@ -157,7 +178,6 @@ export default function Dashboard() {
 
       {/* MAIN */}
       <main style={{ marginLeft: '220px', flex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-
         {activeMenu === 'clientes' && <Clientes />}
         {activeMenu === 'obrigacoes' && <Obrigacoes />}
         {activeMenu === 'alertas' && <Alertas />}
@@ -225,13 +245,13 @@ export default function Dashboard() {
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <div style={{ fontSize: '10px', color: C.accent2, letterSpacing: '1.5px', textTransform: 'uppercase' }}>✨ IA Tributária</div>
-                <span style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '8px', fontWeight: 700 }}>PRO</span>
+                <span style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', borderRadius: '4px', padding: '2px 6px', fontSize: '8px', fontWeight: 700 }}>EM BREVE</span>
               </div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '28px', fontWeight: 800, color: C.accent2 }}>R$ 2.300</div>
-              <div style={{ fontSize: '11px', color: C.text, marginTop: '4px' }}>economia estimada</div>
-              <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>em otimização tributária</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '22px', fontWeight: 800, color: C.accent2 }}>Em desenvolvimento</div>
+              <div style={{ fontSize: '11px', color: C.text, marginTop: '4px' }}>Análise tributária automática</div>
+              <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>Sugestões de otimização fiscal</div>
               <button style={{ marginTop: '12px', padding: '6px 12px', borderRadius: '6px', fontSize: '10px', cursor: 'pointer', border: `1px solid rgba(124,58,237,0.5)`, background: 'rgba(124,58,237,0.15)', color: C.accent2 }}>
-                Ver análise →
+                Quero ser avisado →
               </button>
             </div>
           </div>
@@ -365,54 +385,68 @@ export default function Dashboard() {
               )}
             </div>
 
+            {/* Gráfico com dados reais */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '13px', color: C.text }}>Obrigações por Mês</div>
-                  <div style={{ fontSize: '10px', color: C.red, marginTop: '2px' }}>↑ +18% em atraso vs mês anterior</div>
+                  <div style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>Últimos 6 meses</div>
                 </div>
-                <span style={{ fontSize: '10px', color: C.muted }}>2026</span>
+                <span style={{ fontSize: '10px', color: C.muted }}>{new Date().getFullYear()}</span>
               </div>
               <div style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '100px', marginBottom: '12px' }}>
-                  {[
-                    { mes: 'Jan', g: 60, y: 15, r: 5 },
-                    { mes: 'Fev', g: 55, y: 20, r: 8 },
-                    { mes: 'Mar', g: 70, y: 18, r: 3, pico: true },
-                    { mes: 'Abr', g: 75, y: 12, r: 2 },
-                    { mes: 'Mai', g: 62, y: 22, r: 6 },
-                    { mes: 'Jun', g: 30, y: 40, r: 0, futuro: true },
-                  ].map(({ mes, g, y, r, pico, futuro }) => (
-                    <div key={mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                      {pico && <div style={{ fontSize: '8px', color: C.muted }}>Pico</div>}
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: '2px', width: '100%', opacity: futuro ? 0.35 : 1 }}>
-                        <div style={{ flex: 1, height: `${g}%`, background: C.green, borderRadius: '3px 3px 0 0', opacity: 0.85 }} />
-                        <div style={{ flex: 1, height: `${y}%`, background: C.yellow, borderRadius: '3px 3px 0 0' }} />
-                        {r > 0 && <div style={{ flex: 1, height: `${r}%`, background: C.red, borderRadius: '3px 3px 0 0' }} />}
-                      </div>
-                      <div style={{ fontSize: '9px', color: C.muted }}>{mes}</div>
+                {grafico.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px', color: C.muted, fontSize: '12px' }}>Nenhum dado disponível</div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '100px', marginBottom: '12px' }}>
+                      {grafico.map((m) => {
+                        const total = (m.entregues || 0) + (m.pendentes || 0) + (m.atrasadas || 0);
+                        const g = total > 0 ? Math.round(((m.entregues || 0) / maxGrafico) * 100) : 0;
+                        const y = total > 0 ? Math.round(((m.pendentes || 0) / maxGrafico) * 100) : 0;
+                        const r = total > 0 ? Math.round(((m.atrasadas || 0) / maxGrafico) * 100) : 0;
+                        return (
+                          <div key={m.mes} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: '2px', width: '100%', opacity: m.futuro ? 0.35 : 1 }}>
+                              {g > 0 && <div style={{ flex: 1, height: `${g}%`, background: C.green, borderRadius: '3px 3px 0 0', opacity: 0.85 }} />}
+                              {y > 0 && <div style={{ flex: 1, height: `${y}%`, background: C.yellow, borderRadius: '3px 3px 0 0' }} />}
+                              {r > 0 && <div style={{ flex: 1, height: `${r}%`, background: C.red, borderRadius: '3px 3px 0 0' }} />}
+                              {total === 0 && <div style={{ flex: 1, height: '4px', background: C.border, borderRadius: '3px 3px 0 0' }} />}
+                            </div>
+                            <div style={{ fontSize: '9px', color: C.muted }}>{m.mes}</div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-                  {[['Entregues', C.green], ['Pendentes', C.yellow], ['Atrasadas', C.red]].map(([label, color]) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: C.muted }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: color }} />{label}
+                    <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+                      {[['Entregues', C.green], ['Pendentes', C.yellow], ['Atrasadas', C.red]].map(([label, color]) => (
+                        <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: C.muted }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: color }} />{label}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
                 <div style={{ paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
                   <div style={{ fontSize: '10px', color: C.muted, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Distribuição por Regime</div>
-                  {[['Simples Nacional', 62, C.accent], ['Lucro Presumido', 28, C.accent2], ['Lucro Real', 10, C.yellow]].map(([label, pct, color]) => (
-                    <div key={label} style={{ marginBottom: '10px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '5px', color: C.text }}>
-                        <span>{label}</span><span style={{ color, fontWeight: 600 }}>{pct}%</span>
-                      </div>
-                      <div style={{ height: '4px', background: C.surface2, borderRadius: '2px' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '2px' }} />
-                      </div>
-                    </div>
-                  ))}
+                  {Object.keys(distribuicao).length === 0 ? (
+                    <div style={{ fontSize: '12px', color: C.muted, textAlign: 'center', padding: '12px' }}>Nenhum cliente cadastrado</div>
+                  ) : (
+                    Object.entries(distribuicao).map(([regime, pct]) => {
+                      const color = (regimeColors[regime] || (() => C.muted))(C);
+                      const label = regimeLabels[regime] || regime;
+                      return (
+                        <div key={regime} style={{ marginBottom: '10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '5px', color: C.text }}>
+                            <span>{label}</span><span style={{ color, fontWeight: 600 }}>{pct}%</span>
+                          </div>
+                          <div style={{ height: '4px', background: C.surface2, borderRadius: '2px' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '2px' }} />
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </div>
