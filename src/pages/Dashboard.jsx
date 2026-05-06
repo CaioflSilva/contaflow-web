@@ -140,7 +140,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.bg, color: C.text, fontFamily: "'DM Mono', monospace" }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: C.bg, color: C.text,fontFamily: "'Inter', sans-serif" }}>
 
       {/* SIDEBAR */}
       <aside style={{ width: '220px', minHeight: '100vh', background: C.surface, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, bottom: 0 }}>
